@@ -9,6 +9,16 @@ import { Expense } from "@/types/expense";
 import { nanoid } from "nanoid";
 import { FilterBar } from "@/components/FilterBar";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<"list" | "chart">("list");
@@ -16,6 +26,8 @@ const Index = () => {
   const [expenses, setExpenses] = useLocalStorage<Expense[]>("expenses", []);
   const [filterKeyword, setFilterKeyword] = useState("");
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [expenseToDelete, setExpenseToDelete] = useState<string | null>(null);
 
   const handleAddExpense = (newExpense: Omit<Expense, "id">) => {
     setExpenses((prev) => [...prev, { ...newExpense, id: nanoid() }]);
@@ -26,8 +38,17 @@ const Index = () => {
     setIsModalOpen(true);
   };
 
-  const handleDeleteExpense = (id: string) => {
-    setExpenses((prev) => prev.filter((expense) => expense.id !== id));
+  const handleDeleteClick = (id: string) => {
+    setExpenseToDelete(id);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (expenseToDelete) {
+      setExpenses((prev) => prev.filter((expense) => expense.id !== expenseToDelete));
+      setExpenseToDelete(null);
+    }
+    setDeleteConfirmOpen(false);
   };
 
   const filteredExpenses = expenses.filter((expense) => {
@@ -46,7 +67,7 @@ const Index = () => {
           <ExpensesList
             expenses={filteredExpenses}
             onEdit={handleEditExpense}
-            onDelete={handleDeleteExpense}
+            onDelete={handleDeleteClick}
           />
         ) : (
           <ExpensesChart expenses={filteredExpenses} />
@@ -91,6 +112,21 @@ const Index = () => {
         onAdd={handleAddExpense}
         expense={editingExpense}
       />
+
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the expense.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setExpenseToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
