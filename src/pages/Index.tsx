@@ -7,23 +7,34 @@ import { ExpensesList } from "@/components/ExpensesList";
 import { ExpensesChart } from "@/components/ExpensesChart";
 import { Expense } from "@/types/expense";
 import { nanoid } from "nanoid";
+import { FilterBar } from "@/components/FilterBar";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<"list" | "chart">("list");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [filterKeyword, setFilterKeyword] = useState("");
 
   const handleAddExpense = (newExpense: Omit<Expense, "id">) => {
     setExpenses((prev) => [...prev, { ...newExpense, id: nanoid() }]);
   };
 
+  const filteredExpenses = expenses.filter((expense) => {
+    const keyword = filterKeyword.toLowerCase();
+    return (
+      expense.title.toLowerCase().includes(keyword) ||
+      expense.description.toLowerCase().includes(keyword)
+    );
+  });
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="h-[calc(100vh-64px)] overflow-y-auto">
+        <FilterBar keyword={filterKeyword} onKeywordChange={setFilterKeyword} />
         {activeTab === "list" ? (
-          <ExpensesList expenses={expenses} />
+          <ExpensesList expenses={filteredExpenses} />
         ) : (
-          <ExpensesChart expenses={expenses} />
+          <ExpensesChart expenses={filteredExpenses} />
         )}
       </div>
 
