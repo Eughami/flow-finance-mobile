@@ -14,9 +14,19 @@ const Index = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [filterKeyword, setFilterKeyword] = useState("");
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
 
   const handleAddExpense = (newExpense: Omit<Expense, "id">) => {
     setExpenses((prev) => [...prev, { ...newExpense, id: nanoid() }]);
+  };
+
+  const handleEditExpense = (expense: Expense) => {
+    setEditingExpense(expense);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteExpense = (id: string) => {
+    setExpenses((prev) => prev.filter((expense) => expense.id !== id));
   };
 
   const filteredExpenses = expenses.filter((expense) => {
@@ -32,7 +42,11 @@ const Index = () => {
       <div className="h-[calc(100vh-64px)] overflow-y-auto">
         <FilterBar keyword={filterKeyword} onKeywordChange={setFilterKeyword} />
         {activeTab === "list" ? (
-          <ExpensesList expenses={filteredExpenses} />
+          <ExpensesList
+            expenses={filteredExpenses}
+            onEdit={handleEditExpense}
+            onDelete={handleDeleteExpense}
+          />
         ) : (
           <ExpensesChart expenses={filteredExpenses} />
         )}
@@ -40,7 +54,10 @@ const Index = () => {
 
       <Button
         className="fixed bottom-20 right-4 rounded-full w-12 h-12 p-0"
-        onClick={() => setIsModalOpen(true)}
+        onClick={() => {
+          setEditingExpense(null);
+          setIsModalOpen(true);
+        }}
       >
         <Plus />
       </Button>
@@ -66,8 +83,12 @@ const Index = () => {
 
       <AddExpenseModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingExpense(null);
+        }}
         onAdd={handleAddExpense}
+        expense={editingExpense}
       />
     </div>
   );
