@@ -8,11 +8,12 @@ import { ExpensesChart } from "@/components/ExpensesChart";
 import { Expense } from "@/types/expense";
 import { nanoid } from "nanoid";
 import { FilterBar } from "@/components/FilterBar";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<"list" | "chart">("list");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [expenses, setExpenses] = useLocalStorage<Expense[]>("expenses", []);
   const [filterKeyword, setFilterKeyword] = useState("");
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
 

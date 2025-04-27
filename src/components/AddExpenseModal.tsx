@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -19,18 +19,35 @@ import {
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Expense } from "@/types/expense";
 
 interface AddExpenseModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAdd: (expense: Omit<Expense, "id">) => void;
+  expense?: Expense | null;
 }
 
-export function AddExpenseModal({ isOpen, onClose, onAdd }: AddExpenseModalProps) {
+export function AddExpenseModal({ isOpen, onClose, onAdd, expense }: AddExpenseModalProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState<Date>(new Date());
+
+  // Reset form when modal opens with expense data or empty
+  useEffect(() => {
+    if (expense) {
+      setTitle(expense.title);
+      setDescription(expense.description);
+      setAmount(expense.amount.toString());
+      setDate(new Date(expense.date));
+    } else {
+      setTitle("");
+      setDescription("");
+      setAmount("");
+      setDate(new Date());
+    }
+  }, [expense, isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,10 +57,6 @@ export function AddExpenseModal({ isOpen, onClose, onAdd }: AddExpenseModalProps
       amount: parseFloat(amount),
       date,
     });
-    setTitle("");
-    setDescription("");
-    setAmount("");
-    setDate(new Date());
     onClose();
   };
 
