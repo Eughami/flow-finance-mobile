@@ -6,6 +6,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  base: '/expense-manager/',
   server: {
     host: '::',
     port: 8080,
@@ -22,15 +23,16 @@ export default defineConfig(({ mode }) => ({
         theme_color: '#4CAF50',
         background_color: '#ffffff',
         display: 'standalone',
-        start_url: '/',
+        start_url: '/expense-manager/',
+        scope: '/expense-manager/',
         icons: [
           {
-            src: '/pwa-192x192.png',
+            src: 'pwa-192x192.png',
             sizes: '192x192',
             type: 'image/png',
           },
           {
-            src: '/pwa-512x512.png',
+            src: 'pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png',
           },
