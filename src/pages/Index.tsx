@@ -1,5 +1,6 @@
+
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, SortAsc, SortDesc } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AddExpenseModal } from '@/components/AddExpenseModal';
 import { ExpensesList } from '@/components/ExpensesList';
@@ -8,6 +9,17 @@ import { Expense } from '@/types/expense';
 import { nanoid } from 'nanoid';
 import { FilterBar } from '@/components/FilterBar';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { PeriodNavigation } from '@/components/PeriodNavigation';
+import {
+  addMonths,
+  addYears,
+  startOfMonth,
+  endOfMonth,
+  startOfYear,
+  endOfYear,
+  isSameMonth,
+  isSameYear,
+} from 'date-fns';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,25 +32,31 @@ import {
 } from '@/components/ui/alert-dialog';
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState<'list' | 'chart'>('list');
+  const [view, setView] = useState<'month' | 'year'>('month');
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expenses, setExpenses] = useLocalStorage<Expense[]>('expenses', []);
   const [filterKeyword, setFilterKeyword] = useState('');
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [expenseToDelete, setExpenseToDelete] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+
+  const handleNavigate = (direction: 'prev' | 'next') => {
+    setCurrentDate((current) => {
+      if (view === 'month') {
+        return direction === 'next' ? addMonths(current, 1) : addMonths(current, -1);
+      } else {
+        return direction === 'next' ? addYears(current, 1) : addYears(current, -1);
+      }
+    });
+  };
 
   const handleAddExpense = (newExpense: Expense) => {
-    console.log('called with  : ', newExpense);
-
     if (newExpense.id) {
-      // update
-      const exs = expenses.map((ex) => {
-        if (ex.id === newExpense.id) {
-          return newExpense;
-        } else return ex;
-      });
-      setExpenses(exs);
+      setExpenses((prev) =>
+        prev.map((ex) => (ex.id === newExpense.id ? newExpense : ex))
+      );
     } else {
       setExpenses((prev) => [...prev, { ...newExpense, id: nanoid() }]);
     }
@@ -64,31 +82,82 @@ const Index = () => {
     setDeleteConfirmOpen(false);
   };
 
-  const filteredExpenses = expenses.filter((expense) => {
-    const keyword = filterKeyword.toLowerCase();
-    return (
-      expense.title.toLowerCase().includes(keyword) ||
-      expense.description.toLowerCase().includes(keyword)
-    );
-  });
+  const filteredAndSortedExpenses = expenses
+    .filter((expense) => {
+      const keyword = filterKeyword.toLowerCase();
+      const matchesKeyword =
+        expense.title.toLowerCase().includes(keyword) ||
+        expense.description.toLowerCase().includes(keyword);
+
+      const start = view === 'month' ? startOfMonth(currentDate) : startOfYear(currentDate);
+      const end = view === 'month' ? endOfMonth(currentDate) : endOfYear(currentDate);
+      const expenseDate = new Date(expense.date);
+      
+      const isInPeriod = view === 'month'
+        ? isSameMonth(expenseDate, currentDate)
+        : isSameYear(expenseDate, currentDate);
+
+      return matchesKeyword && isInPeriod;
+    })
+    .sort((a, b) => {
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
+    });
+
+  const periodTotal = filteredAndSortedExpenses.reduce(
+    (sum, expense) => sum + expense.amount,
+    0
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="h-[calc(100vh-64px)] overflow-y-auto">
-        <FilterBar keyword={filterKeyword} onKeywordChange={setFilterKeyword} />
-        {activeTab === 'list' ? (
+        <div className="sticky top-0 z-10 bg-white shadow-sm space-y-2">
+          <div className="p-4 flex items-center gap-2">
+            <div className="flex-1">
+              <FilterBar keyword={filterKeyword} onKeywordChange={setFilterKeyword} />
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() =>
+                setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'))
+              }
+              className="h-10 w-10"
+            >
+              {sortDirection === 'asc' ? (
+                <SortAsc className="h-4 w-4" />
+              ) : (
+                <SortDesc className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+          <PeriodNavigation
+            view={view}
+            currentDate={currentDate}
+            onNavigate={handleNavigate}
+            total={periodTotal}
+          />
+        </div>
+
+        <div className="space-y-4 p-4">
+          <ExpensesChart
+            expenses={filteredAndSortedExpenses}
+            view={view}
+            onViewChange={setView}
+            currentDate={currentDate}
+          />
           <ExpensesList
-            expenses={filteredExpenses}
+            expenses={filteredAndSortedExpenses}
             onEdit={handleEditExpense}
             onDelete={handleDeleteClick}
           />
-        ) : (
-          <ExpensesChart expenses={filteredExpenses} />
-        )}
+        </div>
       </div>
 
       <Button
-        className="fixed bottom-20 right-4 rounded-full w-12 h-12 p-0"
+        className="fixed bottom-4 right-4 rounded-full w-12 h-12 p-0"
         onClick={() => {
           setEditingExpense(null);
           setIsModalOpen(true);
@@ -96,25 +165,6 @@ const Index = () => {
       >
         <Plus />
       </Button>
-
-      <div className="fixed bottom-0 left-0 right-0 h-16 bg-white border-t flex">
-        <button
-          className={`flex-1 flex items-center justify-center ${
-            activeTab === 'list' ? 'text-purple-600' : 'text-gray-400'
-          }`}
-          onClick={() => setActiveTab('list')}
-        >
-          List
-        </button>
-        <button
-          className={`flex-1 flex items-center justify-center ${
-            activeTab === 'chart' ? 'text-purple-600' : 'text-gray-400'
-          }`}
-          onClick={() => setActiveTab('chart')}
-        >
-          Chart
-        </button>
-      </div>
 
       <AddExpenseModal
         isOpen={isModalOpen}
