@@ -1,6 +1,5 @@
-
 import { useState } from 'react';
-import { Plus, SortAsc, SortDesc } from 'lucide-react';
+import { Plus, SortAsc, SortDesc, Download, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AddExpenseModal } from '@/components/AddExpenseModal';
 import { ExpensesList } from '@/components/ExpensesList';
@@ -10,6 +9,7 @@ import { nanoid } from 'nanoid';
 import { FilterBar } from '@/components/FilterBar';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { PeriodNavigation } from '@/components/PeriodNavigation';
+import { toast } from 'sonner';
 import {
   addMonths,
   addYears,
@@ -82,6 +82,66 @@ const Index = () => {
     setDeleteConfirmOpen(false);
   };
 
+  const handleExport = () => {
+    try {
+      const dataStr = JSON.stringify(expenses, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `expenses-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success('Expenses exported successfully!');
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Failed to export expenses');
+    }
+  };
+
+  const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result as string;
+        const importedExpenses = JSON.parse(content);
+        
+        // Validate that it's an array of expenses
+        if (!Array.isArray(importedExpenses)) {
+          throw new Error('Invalid file format');
+        }
+
+        // Validate each expense has required fields
+        const validExpenses = importedExpenses.filter((expense: any) => 
+          expense.title && expense.amount !== undefined && expense.date
+        ).map((expense: any) => ({
+          ...expense,
+          id: expense.id || nanoid(),
+          date: new Date(expense.date)
+        }));
+
+        if (validExpenses.length === 0) {
+          throw new Error('No valid expenses found in file');
+        }
+
+        setExpenses(validExpenses);
+        toast.success(`Imported ${validExpenses.length} expenses successfully!`);
+      } catch (error) {
+        console.error('Import error:', error);
+        toast.error('Failed to import expenses. Please check file format.');
+      }
+    };
+    reader.readAsText(file);
+    
+    // Reset the input
+    event.target.value = '';
+  };
+
   const filteredAndSortedExpenses = expenses
     .filter((expense) => {
       const keyword = filterKeyword.toLowerCase();
@@ -132,6 +192,29 @@ const Index = () => {
                 <SortDesc className="h-4 w-4" />
               )}
             </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleExport}
+              className="h-10 w-10"
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => document.getElementById('import-file')?.click()}
+              className="h-10 w-10"
+            >
+              <Upload className="h-4 w-4" />
+            </Button>
+            <input
+              id="import-file"
+              type="file"
+              accept=".json"
+              onChange={handleImport}
+              className="hidden"
+            />
           </div>
           <PeriodNavigation
             view={view}
