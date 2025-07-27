@@ -37,6 +37,7 @@ const Index = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expenses, setExpenses] = useLocalStorage<Expense[]>('expenses', []);
   const [filterKeyword, setFilterKeyword] = useState('');
+  const [typeFilter, setTypeFilter] = useState<'all' | 'income' | 'expense'>('all');
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [expenseToDelete, setExpenseToDelete] = useState<string | null>(null);
@@ -122,7 +123,8 @@ const Index = () => {
         ).map((expense: any) => ({
           ...expense,
           id: expense.id || nanoid(),
-          date: new Date(expense.date)
+          date: new Date(expense.date),
+          type: expense.type || 'expense'
         }));
 
         if (validExpenses.length === 0) {
@@ -149,6 +151,8 @@ const Index = () => {
         expense.title.toLowerCase().includes(keyword) ||
         expense.description.toLowerCase().includes(keyword);
 
+      const matchesType = typeFilter === 'all' || expense.type === typeFilter;
+
       const start = view === 'month' ? startOfMonth(currentDate) : startOfYear(currentDate);
       const end = view === 'month' ? endOfMonth(currentDate) : endOfYear(currentDate);
       const expenseDate = new Date(expense.date);
@@ -157,7 +161,7 @@ const Index = () => {
         ? isSameMonth(expenseDate, currentDate)
         : isSameYear(expenseDate, currentDate);
 
-      return matchesKeyword && isInPeriod;
+      return matchesKeyword && matchesType && isInPeriod;
     })
     .sort((a, b) => {
       const dateA = new Date(a.date).getTime();
@@ -165,10 +169,15 @@ const Index = () => {
       return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
     });
 
-  const periodTotal = filteredAndSortedExpenses.reduce(
-    (sum, expense) => sum + expense.amount,
-    0
-  );
+  const periodIncome = filteredAndSortedExpenses
+    .filter(expense => expense.type === 'income')
+    .reduce((sum, expense) => sum + expense.amount, 0);
+  
+  const periodExpenses = filteredAndSortedExpenses
+    .filter(expense => expense.type === 'expense')
+    .reduce((sum, expense) => sum + expense.amount, 0);
+  
+  const periodTotal = periodIncome - periodExpenses;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -176,7 +185,12 @@ const Index = () => {
         <div className="sticky top-0 z-10 bg-white shadow-sm space-y-2">
           <div className="p-4 flex items-center gap-2">
             <div className="flex-1">
-              <FilterBar keyword={filterKeyword} onKeywordChange={setFilterKeyword} />
+              <FilterBar 
+                keyword={filterKeyword} 
+                onKeywordChange={setFilterKeyword}
+                typeFilter={typeFilter}
+                onTypeFilterChange={setTypeFilter}
+              />
             </div>
             <Button
               variant="ghost"
@@ -220,6 +234,8 @@ const Index = () => {
             view={view}
             currentDate={currentDate}
             onNavigate={handleNavigate}
+            income={periodIncome}
+            expenses={periodExpenses}
             total={periodTotal}
           />
         </div>

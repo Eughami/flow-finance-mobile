@@ -7,6 +7,8 @@ interface PeriodNavigationProps {
   view: 'month' | 'year';
   currentDate: Date;
   onNavigate: (direction: 'prev' | 'next') => void;
+  income: number;
+  expenses: number;
   total: number;
 }
 
@@ -14,6 +16,8 @@ export function PeriodNavigation({
   view,
   currentDate,
   onNavigate,
+  income,
+  expenses,
   total,
 }: PeriodNavigationProps) {
   const title =
@@ -33,9 +37,15 @@ export function PeriodNavigation({
       </Button>
       <div className="text-center">
         <h2 className="text-lg font-semibold">{title}</h2>
-        <p className="text-sm text-muted-foreground">
-          Total: ${total.toFixed(2)}
-        </p>
+        <div className="text-sm space-y-1">
+          <div className="flex justify-center gap-4">
+            <span className="text-green-600">+${income.toFixed(2)}</span>
+            <span className="text-red-600">-${expenses.toFixed(2)}</span>
+          </div>
+          <p className={`font-medium ${total >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            Net: ${total.toFixed(2)}
+          </p>
+        </div>
       </div>
       <Button
         variant="ghost"

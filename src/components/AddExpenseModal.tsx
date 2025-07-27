@@ -9,6 +9,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import {
   Popover,
@@ -37,6 +38,7 @@ export function AddExpenseModal({
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState<Date>(new Date());
+  const [type, setType] = useState<'income' | 'expense'>('expense');
 
   // Reset form when modal opens with expense data or empty
   useEffect(() => {
@@ -45,11 +47,13 @@ export function AddExpenseModal({
       setDescription(expense.description);
       setAmount(expense.amount.toString());
       setDate(new Date(expense.date));
+      setType(expense.type);
     } else {
       setTitle('');
       setDescription('');
       setAmount('');
       setDate(new Date());
+      setType('expense');
     }
   }, [expense, isOpen]);
 
@@ -61,6 +65,7 @@ export function AddExpenseModal({
       description,
       amount: parseFloat(amount),
       date,
+      type,
     });
     onClose();
   };
@@ -69,9 +74,21 @@ export function AddExpenseModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[320px] rounded-lg p-6">
         <DialogHeader>
-          <DialogTitle>Add New Expense</DialogTitle>
+          <DialogTitle>{expense?.id ? 'Edit' : 'Add'} {type === 'income' ? 'Income' : 'Expense'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="type">Type</Label>
+            <Select value={type} onValueChange={(value: 'income' | 'expense') => setType(value)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="expense">Expense</SelectItem>
+                <SelectItem value="income">Income</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div>
             <Label htmlFor="title">Title</Label>
             <Input
@@ -128,7 +145,7 @@ export function AddExpenseModal({
             </Popover>
           </div>
           <Button type="submit" className="w-full">
-            {expense?.id ? 'Edit' : 'Add'} Expense
+            {expense?.id ? 'Edit' : 'Add'} {type === 'income' ? 'Income' : 'Expense'}
           </Button>
         </form>
       </DialogContent>

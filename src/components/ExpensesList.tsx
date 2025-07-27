@@ -25,8 +25,10 @@ export function ExpensesList({ expenses, onEdit, onDelete }: ExpensesListProps) 
                 <p className="text-sm text-gray-500">{expense.description}</p>
               )}
             </div>
-            <span className="text-lg font-semibold text-red-500 mx-4">
-              -${expense.amount.toFixed(2)}
+            <span className={`text-lg font-semibold mx-4 ${
+              expense.type === 'income' ? 'text-green-500' : 'text-red-500'
+            }`}>
+              {expense.type === 'income' ? '+' : '-'}${expense.amount.toFixed(2)}
             </span>
             <div className="flex gap-2 items-start">
               <Button
