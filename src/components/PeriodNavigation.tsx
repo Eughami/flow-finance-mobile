@@ -1,4 +1,3 @@
-
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
@@ -39,11 +38,15 @@ export function PeriodNavigation({
         <h2 className="text-lg font-semibold">{title}</h2>
         <div className="text-sm space-y-1">
           <div className="flex justify-center gap-4">
-            <span className="text-green-600">+${income.toFixed(2)}</span>
-            <span className="text-red-600">-${expenses.toFixed(2)}</span>
+            <span className="text-green-600">+{income.toFixed(2)} FDJ</span>
+            <span className="text-red-600">-{expenses.toFixed(2)} FDJ</span>
           </div>
-          <p className={`font-medium ${total >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-            Net: ${total.toFixed(2)}
+          <p
+            className={`font-medium ${
+              total >= 0 ? 'text-green-600' : 'text-red-600'
+            }`}
+          >
+            Net: {total.toFixed(2)} FDJ
           </p>
         </div>
       </div>

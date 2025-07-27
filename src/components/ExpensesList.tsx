@@ -1,8 +1,7 @@
-
-import { format } from "date-fns";
-import { Edit, Trash2 } from "lucide-react";
-import { Expense } from "@/types/expense";
-import { Button } from "@/components/ui/button";
+import { format } from 'date-fns';
+import { Edit, Trash2 } from 'lucide-react';
+import { Expense } from '@/types/expense';
+import { Button } from '@/components/ui/button';
 
 interface ExpensesListProps {
   expenses: Expense[];
@@ -10,7 +9,11 @@ interface ExpensesListProps {
   onDelete?: (id: string) => void;
 }
 
-export function ExpensesList({ expenses, onEdit, onDelete }: ExpensesListProps) {
+export function ExpensesList({
+  expenses,
+  onEdit,
+  onDelete,
+}: ExpensesListProps) {
   return (
     <div className="space-y-4 p-4">
       {expenses.map((expense) => (
@@ -25,10 +28,13 @@ export function ExpensesList({ expenses, onEdit, onDelete }: ExpensesListProps) 
                 <p className="text-sm text-gray-500">{expense.description}</p>
               )}
             </div>
-            <span className={`text-lg font-semibold mx-4 ${
-              expense.type === 'income' ? 'text-green-500' : 'text-red-500'
-            }`}>
-              {expense.type === 'income' ? '+' : '-'}${expense.amount.toFixed(2)}
+            <span
+              className={`text-lg font-semibold mx-4 ${
+                expense.type === 'income' ? 'text-green-500' : 'text-red-500'
+              }`}
+            >
+              {expense.type === 'income' ? '+' : '-'}
+              {expense.amount.toFixed(2)} FDJ
             </span>
             <div className="flex gap-2 items-start">
               <Button
@@ -50,7 +56,7 @@ export function ExpensesList({ expenses, onEdit, onDelete }: ExpensesListProps) 
             </div>
           </div>
           <div className="text-sm text-gray-400">
-            {format(new Date(expense.date), "MMM d, yyyy")}
+            {format(new Date(expense.date), 'MMM d, yyyy')}
           </div>
         </div>
       ))}
