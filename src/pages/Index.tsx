@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, SortAsc, SortDesc, Download, Upload } from 'lucide-react';
+import { Plus, SortAsc, SortDesc, Download, Upload, MoreVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AddExpenseModal } from '@/components/AddExpenseModal';
 import { ExpensesList } from '@/components/ExpensesList';
@@ -42,6 +42,8 @@ const Index = () => {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [expenseToDelete, setExpenseToDelete] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [sortType, setSortType] = useState<'date' | 'amount'>('date');
+  const [showActions, setShowActions] = useState(false);
 
   const handleNavigate = (direction: 'prev' | 'next') => {
     setCurrentDate((current) => {
@@ -164,9 +166,13 @@ const Index = () => {
       return matchesKeyword && matchesType && isInPeriod;
     })
     .sort((a, b) => {
-      const dateA = new Date(a.date).getTime();
-      const dateB = new Date(b.date).getTime();
-      return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
+      if (sortType === 'date') {
+        const dateA = new Date(a.date).getTime();
+        const dateB = new Date(b.date).getTime();
+        return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
+      } else {
+        return sortDirection === 'asc' ? a.amount - b.amount : b.amount - a.amount;
+      }
     });
 
   const periodIncome = filteredAndSortedExpenses
@@ -195,32 +201,10 @@ const Index = () => {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() =>
-                setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'))
-              }
+              onClick={() => setShowActions(!showActions)}
               className="h-10 w-10"
             >
-              {sortDirection === 'asc' ? (
-                <SortAsc className="h-4 w-4" />
-              ) : (
-                <SortDesc className="h-4 w-4" />
-              )}
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handleExport}
-              className="h-10 w-10"
-            >
-              <Download className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => document.getElementById('import-file')?.click()}
-              className="h-10 w-10"
-            >
-              <Upload className="h-4 w-4" />
+              <MoreVertical className="h-4 w-4" />
             </Button>
             <input
               id="import-file"
@@ -230,6 +214,54 @@ const Index = () => {
               className="hidden"
             />
           </div>
+          {showActions && (
+            <div className="px-4 pb-2 flex items-center gap-2 border-t border-gray-200">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">Sort by:</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSortType(sortType === 'date' ? 'amount' : 'date')}
+                  className="h-8"
+                >
+                  {sortType === 'date' ? 'Date' : 'Amount'}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() =>
+                    setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'))
+                  }
+                  className="h-8 w-8"
+                >
+                  {sortDirection === 'asc' ? (
+                    <SortAsc className="h-4 w-4" />
+                  ) : (
+                    <SortDesc className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+              <div className="h-4 w-px bg-gray-300 mx-2" />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleExport}
+                className="h-8"
+              >
+                <Download className="h-4 w-4 mr-1" />
+                Export
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => document.getElementById('import-file')?.click()}
+                className="h-8"
+              >
+                <Upload className="h-4 w-4 mr-1" />
+                Import
+              </Button>
+            </div>
+          )}
           <PeriodNavigation
             view={view}
             currentDate={currentDate}
