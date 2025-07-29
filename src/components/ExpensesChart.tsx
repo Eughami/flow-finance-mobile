@@ -4,12 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Expense } from '@/types/expense';
 import {
   format,
-  startOfMonth,
-  endOfMonth,
+  setDate,
   startOfYear,
   endOfYear,
-  isSameMonth,
   isSameYear,
+  getDaysInMonth,
 } from 'date-fns';
 
 interface ExpensesChartProps {
@@ -25,27 +24,41 @@ export function ExpensesChart({
   onViewChange,
   currentDate,
 }: ExpensesChartProps) {
+  // Helper functions for custom month periods (26th to 25th)
+  const getCustomMonthStart = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    return setDate(new Date(year, month - 1, 26), 26);
+  };
+
+  const getCustomMonthEnd = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    return setDate(new Date(year, month, 25), 25);
+  };
+
+  const isInCustomMonth = (expenseDate: Date, currentDate: Date) => {
+    const start = getCustomMonthStart(currentDate);
+    const end = getCustomMonthEnd(currentDate);
+    return expenseDate >= start && expenseDate <= end;
+  };
+
   const getChartData = () => {
-    const start = view === 'month' ? startOfMonth(currentDate) : startOfYear(currentDate);
-    const end = view === 'month' ? endOfMonth(currentDate) : endOfYear(currentDate);
-
     if (view === 'month') {
-      const daysInMonth = new Date(
-        currentDate.getFullYear(),
-        currentDate.getMonth() + 1,
-        0
-      ).getDate();
-
-      const dailyData = new Array(daysInMonth).fill(0).map((_, i) => ({
+      // For custom month (26th to 25th), we need 30 days
+      const dailyData = new Array(30).fill(0).map((_, i) => ({
         date: i + 1,
         amount: 0,
       }));
 
       expenses.forEach((expense) => {
         const expenseDate = new Date(expense.date);
-        if (isSameMonth(expenseDate, currentDate)) {
-          const day = expenseDate.getDate();
-          dailyData[day - 1].amount += expense.amount;
+        if (isInCustomMonth(expenseDate, currentDate)) {
+          const start = getCustomMonthStart(currentDate);
+          const daysDiff = Math.floor((expenseDate.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+          if (daysDiff >= 0 && daysDiff < 30) {
+            dailyData[daysDiff].amount += expense.amount;
+          }
         }
       });
 
