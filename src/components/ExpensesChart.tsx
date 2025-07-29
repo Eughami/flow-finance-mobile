@@ -16,6 +16,7 @@ interface ExpensesChartProps {
   view: 'month' | 'year';
   onViewChange: (view: 'month' | 'year') => void;
   currentDate: Date;
+  typeFilter: 'all' | 'income' | 'expense';
 }
 
 export function ExpensesChart({
@@ -23,6 +24,7 @@ export function ExpensesChart({
   view,
   onViewChange,
   currentDate,
+  typeFilter,
 }: ExpensesChartProps) {
   // Helper functions for custom month periods (26th to 25th)
   const getCustomMonthStart = (date: Date) => {
@@ -57,12 +59,17 @@ export function ExpensesChart({
       });
 
       expenses.forEach((expense) => {
-        const expenseDate = new Date(expense.date);
-        if (isInCustomMonth(expenseDate, currentDate)) {
-          const start = getCustomMonthStart(currentDate);
-          const daysDiff = Math.floor((expenseDate.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-          if (daysDiff >= 0 && daysDiff < 30) {
-            dailyData[daysDiff].amount += expense.amount;
+        // Filter expenses based on typeFilter - by default show only expenses
+        const shouldInclude = typeFilter === 'income' ? expense.type === 'income' : expense.type === 'expense';
+        
+        if (shouldInclude) {
+          const expenseDate = new Date(expense.date);
+          if (isInCustomMonth(expenseDate, currentDate)) {
+            const start = getCustomMonthStart(currentDate);
+            const daysDiff = Math.floor((expenseDate.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+            if (daysDiff >= 0 && daysDiff < 30) {
+              dailyData[daysDiff].amount += expense.amount;
+            }
           }
         }
       });
@@ -75,10 +82,15 @@ export function ExpensesChart({
       }));
 
       expenses.forEach((expense) => {
-        const expenseDate = new Date(expense.date);
-        if (isSameYear(expenseDate, currentDate)) {
-          const month = expenseDate.getMonth();
-          monthlyData[month].amount += expense.amount;
+        // Filter expenses based on typeFilter - by default show only expenses
+        const shouldInclude = typeFilter === 'income' ? expense.type === 'income' : expense.type === 'expense';
+        
+        if (shouldInclude) {
+          const expenseDate = new Date(expense.date);
+          if (isSameYear(expenseDate, currentDate)) {
+            const month = expenseDate.getMonth();
+            monthlyData[month].amount += expense.amount;
+          }
         }
       });
 

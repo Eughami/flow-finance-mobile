@@ -296,6 +296,7 @@ const Index = () => {
             view={view}
             onViewChange={setView}
             currentDate={currentDate}
+            typeFilter={typeFilter}
           />
           <ExpensesList
             expenses={filteredAndSortedExpenses}
