@@ -45,11 +45,16 @@ export function ExpensesChart({
 
   const getChartData = () => {
     if (view === 'month') {
-      // For custom month (26th to 25th), we need 30 days
-      const dailyData = new Array(30).fill(0).map((_, i) => ({
-        date: i + 1,
-        amount: 0,
-      }));
+      // For custom month (26th to 25th), we need 30 days with actual dates
+      const start = getCustomMonthStart(currentDate);
+      const dailyData = new Array(30).fill(0).map((_, i) => {
+        const date = new Date(start);
+        date.setDate(start.getDate() + i);
+        return {
+          date: date.getDate(),
+          amount: 0,
+        };
+      });
 
       expenses.forEach((expense) => {
         const expenseDate = new Date(expense.date);
