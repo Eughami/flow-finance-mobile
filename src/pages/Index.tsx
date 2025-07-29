@@ -19,6 +19,7 @@ import {
   endOfYear,
   isSameMonth,
   isSameYear,
+  setDate,
 } from 'date-fns';
 import {
   AlertDialog,
@@ -44,6 +45,25 @@ const Index = () => {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [sortType, setSortType] = useState<'date' | 'amount'>('date');
   const [showActions, setShowActions] = useState(false);
+
+  // Helper functions for custom month periods (26th to 25th)
+  const getCustomMonthStart = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    return setDate(new Date(year, month - 1, 26), 26);
+  };
+
+  const getCustomMonthEnd = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    return setDate(new Date(year, month, 25), 25);
+  };
+
+  const isInCustomMonth = (expenseDate: Date, currentDate: Date) => {
+    const start = getCustomMonthStart(currentDate);
+    const end = getCustomMonthEnd(currentDate);
+    return expenseDate >= start && expenseDate <= end;
+  };
 
   const handleNavigate = (direction: 'prev' | 'next') => {
     setCurrentDate((current) => {
@@ -155,12 +175,10 @@ const Index = () => {
 
       const matchesType = typeFilter === 'all' || expense.type === typeFilter;
 
-      const start = view === 'month' ? startOfMonth(currentDate) : startOfYear(currentDate);
-      const end = view === 'month' ? endOfMonth(currentDate) : endOfYear(currentDate);
       const expenseDate = new Date(expense.date);
       
       const isInPeriod = view === 'month'
-        ? isSameMonth(expenseDate, currentDate)
+        ? isInCustomMonth(expenseDate, currentDate)
         : isSameYear(expenseDate, currentDate);
 
       return matchesKeyword && matchesType && isInPeriod;
