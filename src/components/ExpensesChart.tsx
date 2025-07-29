@@ -1,7 +1,10 @@
 
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { Expense } from '@/types/expense';
+import { useState } from 'react';
 import {
   format,
   setDate,
@@ -26,6 +29,8 @@ export function ExpensesChart({
   currentDate,
   typeFilter,
 }: ExpensesChartProps) {
+  const [useLog10, setUseLog10] = useState(false);
+
   // Helper functions for custom month periods (26th to 25th)
   const getCustomMonthStart = (date: Date) => {
     const year = date.getFullYear();
@@ -46,6 +51,8 @@ export function ExpensesChart({
   };
 
   const getChartData = () => {
+    let data;
+    
     if (view === 'month') {
       // For custom month (26th to 25th), we need 30 days with actual dates
       const start = getCustomMonthStart(currentDate);
@@ -55,6 +62,7 @@ export function ExpensesChart({
         return {
           date: date.getDate(),
           amount: 0,
+          originalAmount: 0,
         };
       });
 
@@ -69,16 +77,18 @@ export function ExpensesChart({
             const daysDiff = Math.floor((expenseDate.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
             if (daysDiff >= 0 && daysDiff < 30) {
               dailyData[daysDiff].amount += expense.amount;
+              dailyData[daysDiff].originalAmount += expense.amount;
             }
           }
         }
       });
 
-      return dailyData;
+      data = dailyData;
     } else {
       const monthlyData = new Array(12).fill(0).map((_, i) => ({
         date: format(new Date(currentDate.getFullYear(), i), 'MMM'),
         amount: 0,
+        originalAmount: 0,
       }));
 
       expenses.forEach((expense) => {
@@ -90,12 +100,40 @@ export function ExpensesChart({
           if (isSameYear(expenseDate, currentDate)) {
             const month = expenseDate.getMonth();
             monthlyData[month].amount += expense.amount;
+            monthlyData[month].originalAmount += expense.amount;
           }
         }
       });
 
-      return monthlyData;
+      data = monthlyData;
     }
+
+    // Apply log10 transformation if enabled
+    if (useLog10) {
+      return data.map(item => ({
+        ...item,
+        amount: item.amount > 0 ? Math.log10(item.amount) : 0,
+      }));
+    }
+
+    return data;
+  };
+
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      const displayValue = useLog10 ? data.originalAmount : data.amount;
+      return (
+        <div className="bg-background border border-border rounded-lg p-3 shadow-lg">
+          <p className="text-sm font-medium">{`Date: ${label}`}</p>
+          <p className="text-sm text-primary">
+            {`Amount: ${displayValue.toLocaleString()}`}
+            {useLog10 && ` (log₁₀: ${data.amount.toFixed(2)})`}
+          </p>
+        </div>
+      );
+    }
+    return null;
   };
 
   return (
@@ -116,12 +154,22 @@ export function ExpensesChart({
           Year
         </Button>
       </div>
+      <div className="flex items-center gap-2">
+        <Switch
+          id="log-scale"
+          checked={useLog10}
+          onCheckedChange={setUseLog10}
+        />
+        <Label htmlFor="log-scale" className="text-sm">
+          Log₁₀ Scale
+        </Label>
+      </div>
       <div className="h-[300px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={getChartData()}>
             <XAxis dataKey="date" />
             <YAxis />
-            <Tooltip />
+            <Tooltip content={<CustomTooltip />} />
             <Bar dataKey="amount" fill="#9b87f5" />
           </BarChart>
         </ResponsiveContainer>
