@@ -34,7 +34,7 @@ export function ExpensesList({
               }`}
             >
               {expense.type === 'income' ? '+' : '-'}
-              {expense.amount.toFixed(2)} FDJ
+              {expense.amount} FDJ
             </span>
             <div className="flex gap-2 items-start">
               <Button

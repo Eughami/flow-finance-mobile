@@ -1,7 +1,12 @@
-
-import { Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface FilterBarProps {
   keyword: string;
@@ -10,7 +15,12 @@ interface FilterBarProps {
   onTypeFilterChange: (type: 'all' | 'income' | 'expense') => void;
 }
 
-export function FilterBar({ keyword, onKeywordChange, typeFilter, onTypeFilterChange }: FilterBarProps) {
+export function FilterBar({
+  keyword,
+  onKeywordChange,
+  typeFilter,
+  onTypeFilterChange,
+}: FilterBarProps) {
   return (
     <div className="flex gap-2">
       <div className="relative flex-1">
@@ -28,7 +38,7 @@ export function FilterBar({ keyword, onKeywordChange, typeFilter, onTypeFilterCh
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All</SelectItem>
+          {/* <SelectItem value="all">All</SelectItem> */}
           <SelectItem value="income">Income</SelectItem>
           <SelectItem value="expense">Expense</SelectItem>
         </SelectContent>

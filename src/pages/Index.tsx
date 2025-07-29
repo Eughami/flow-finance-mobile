@@ -1,5 +1,12 @@
 import { useState } from 'react';
-import { Plus, SortAsc, SortDesc, Download, Upload, MoreVertical } from 'lucide-react';
+import {
+  Plus,
+  SortAsc,
+  SortDesc,
+  Download,
+  Upload,
+  MoreVertical,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AddExpenseModal } from '@/components/AddExpenseModal';
 import { ExpensesList } from '@/components/ExpensesList';
@@ -38,7 +45,9 @@ const Index = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expenses, setExpenses] = useLocalStorage<Expense[]>('expenses', []);
   const [filterKeyword, setFilterKeyword] = useState('');
-  const [typeFilter, setTypeFilter] = useState<'all' | 'income' | 'expense'>('all');
+  const [typeFilter, setTypeFilter] = useState<'all' | 'income' | 'expense'>(
+    'expense'
+  );
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [expenseToDelete, setExpenseToDelete] = useState<string | null>(null);
@@ -68,9 +77,13 @@ const Index = () => {
   const handleNavigate = (direction: 'prev' | 'next') => {
     setCurrentDate((current) => {
       if (view === 'month') {
-        return direction === 'next' ? addMonths(current, 1) : addMonths(current, -1);
+        return direction === 'next'
+          ? addMonths(current, 1)
+          : addMonths(current, -1);
       } else {
-        return direction === 'next' ? addYears(current, 1) : addYears(current, -1);
+        return direction === 'next'
+          ? addYears(current, 1)
+          : addYears(current, -1);
       }
     });
   };
@@ -133,35 +146,40 @@ const Index = () => {
       try {
         const content = e.target?.result as string;
         const importedExpenses = JSON.parse(content);
-        
+
         // Validate that it's an array of expenses
         if (!Array.isArray(importedExpenses)) {
           throw new Error('Invalid file format');
         }
 
         // Validate each expense has required fields
-        const validExpenses = importedExpenses.filter((expense: any) => 
-          expense.title && expense.amount !== undefined && expense.date
-        ).map((expense: any) => ({
-          ...expense,
-          id: expense.id || nanoid(),
-          date: new Date(expense.date),
-          type: expense.type || 'expense'
-        }));
+        const validExpenses = importedExpenses
+          .filter(
+            (expense: any) =>
+              expense.title && expense.amount !== undefined && expense.date
+          )
+          .map((expense: any) => ({
+            ...expense,
+            id: expense.id || nanoid(),
+            date: new Date(expense.date),
+            type: expense.type || 'expense',
+          }));
 
         if (validExpenses.length === 0) {
           throw new Error('No valid expenses found in file');
         }
 
         setExpenses(validExpenses);
-        toast.success(`Imported ${validExpenses.length} expenses successfully!`);
+        toast.success(
+          `Imported ${validExpenses.length} expenses successfully!`
+        );
       } catch (error) {
         console.error('Import error:', error);
         toast.error('Failed to import expenses. Please check file format.');
       }
     };
     reader.readAsText(file);
-    
+
     // Reset the input
     event.target.value = '';
   };
@@ -176,10 +194,11 @@ const Index = () => {
       const matchesType = typeFilter === 'all' || expense.type === typeFilter;
 
       const expenseDate = new Date(expense.date);
-      
-      const isInPeriod = view === 'month'
-        ? isInCustomMonth(expenseDate, currentDate)
-        : isSameYear(expenseDate, currentDate);
+
+      const isInPeriod =
+        view === 'month'
+          ? isInCustomMonth(expenseDate, currentDate)
+          : isSameYear(expenseDate, currentDate);
 
       return matchesKeyword && matchesType && isInPeriod;
     })
@@ -189,18 +208,36 @@ const Index = () => {
         const dateB = new Date(b.date).getTime();
         return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
       } else {
-        return sortDirection === 'asc' ? a.amount - b.amount : b.amount - a.amount;
+        return sortDirection === 'asc'
+          ? a.amount - b.amount
+          : b.amount - a.amount;
       }
     });
 
-  const periodIncome = filteredAndSortedExpenses
-    .filter(expense => expense.type === 'income')
+  const filteredRecords = expenses.filter((expense) => {
+    const keyword = filterKeyword.toLowerCase();
+
+    const matchesKeyword =
+      expense.title.toLowerCase().includes(keyword) ||
+      expense.description.toLowerCase().includes(keyword);
+
+    const expenseDate = new Date(expense.date);
+
+    const isInPeriod =
+      view === 'month'
+        ? isInCustomMonth(expenseDate, currentDate)
+        : isSameYear(expenseDate, currentDate);
+
+    return matchesKeyword && isInPeriod;
+  });
+  const periodIncome = filteredRecords
+    .filter((expense) => expense.type === 'income')
     .reduce((sum, expense) => sum + expense.amount, 0);
-  
-  const periodExpenses = filteredAndSortedExpenses
-    .filter(expense => expense.type === 'expense')
+
+  const periodExpenses = filteredRecords
+    .filter((expense) => expense.type === 'expense')
     .reduce((sum, expense) => sum + expense.amount, 0);
-  
+
   const periodTotal = periodIncome - periodExpenses;
 
   return (
@@ -209,8 +246,8 @@ const Index = () => {
         <div className="sticky top-0 z-10 bg-white shadow-sm space-y-2">
           <div className="p-4 flex items-center gap-2">
             <div className="flex-1">
-              <FilterBar 
-                keyword={filterKeyword} 
+              <FilterBar
+                keyword={filterKeyword}
                 onKeywordChange={setFilterKeyword}
                 typeFilter={typeFilter}
                 onTypeFilterChange={setTypeFilter}
@@ -239,7 +276,9 @@ const Index = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setSortType(sortType === 'date' ? 'amount' : 'date')}
+                  onClick={() =>
+                    setSortType(sortType === 'date' ? 'amount' : 'date')
+                  }
                   className="h-8"
                 >
                   {sortType === 'date' ? 'Date' : 'Amount'}
@@ -248,7 +287,9 @@ const Index = () => {
                   variant="ghost"
                   size="icon"
                   onClick={() =>
-                    setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'))
+                    setSortDirection((prev) =>
+                      prev === 'asc' ? 'desc' : 'asc'
+                    )
                   }
                   className="h-8 w-8"
                 >
