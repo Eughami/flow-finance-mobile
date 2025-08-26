@@ -1,5 +1,11 @@
-
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
 import { Button } from '@/components/ui/button';
 import { Expense } from '@/types/expense';
 import {
@@ -10,6 +16,11 @@ import {
   isSameYear,
   getDaysInMonth,
 } from 'date-fns';
+import {
+  getCustomMonthEnd,
+  getCustomMonthStart,
+  isInCustomMonth,
+} from '@/lib/utils';
 
 interface ExpensesChartProps {
   expenses: Expense[];
@@ -26,30 +37,24 @@ export function ExpensesChart({
   currentDate,
   typeFilter,
 }: ExpensesChartProps) {
-  // Helper functions for custom month periods (26th to 25th)
-  const getCustomMonthStart = (date: Date) => {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    return setDate(new Date(year, month - 1, 26), 26);
-  };
+  //! fix this after
+  //! show current month if date.day < 26
+  //! else show next month (26 Aug -> Sept 2025)
 
-  const getCustomMonthEnd = (date: Date) => {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    return setDate(new Date(year, month, 25), 25);
-  };
+  const diffDays = (start: Date, end: Date) => {
+    const oneDay = 1000 * 60 * 60 * 24;
 
-  const isInCustomMonth = (expenseDate: Date, currentDate: Date) => {
-    const start = getCustomMonthStart(currentDate);
-    const end = getCustomMonthEnd(currentDate);
-    return expenseDate >= start && expenseDate <= end;
+    const diffInMs = Math.abs(start.getTime() - end.getTime());
+    return Math.floor(diffInMs / oneDay);
   };
-
   const getChartData = () => {
     if (view === 'month') {
-      // For custom month (26th to 25th), we need 30 days with actual dates
+      // For custom month (26th to 25th), we need to calculate  difference in days according
+      // to the actual dates (for example february should be 28 days and 30/31 days month should be different)
       const start = getCustomMonthStart(currentDate);
-      const dailyData = new Array(30).fill(0).map((_, i) => {
+      const end = getCustomMonthEnd(currentDate);
+      const numOfDays = diffDays(start, end) + 1;
+      const dailyData = new Array(numOfDays).fill(0).map((_, i) => {
         const date = new Date(start);
         date.setDate(start.getDate() + i);
         return {
@@ -60,14 +65,19 @@ export function ExpensesChart({
 
       expenses.forEach((expense) => {
         // Filter expenses based on typeFilter - by default show only expenses
-        const shouldInclude = typeFilter === 'income' ? expense.type === 'income' : expense.type === 'expense';
-        
+        const shouldInclude =
+          typeFilter === 'income'
+            ? expense.type === 'income'
+            : expense.type === 'expense';
+
         if (shouldInclude) {
           const expenseDate = new Date(expense.date);
           if (isInCustomMonth(expenseDate, currentDate)) {
             const start = getCustomMonthStart(currentDate);
-            const daysDiff = Math.floor((expenseDate.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-            if (daysDiff >= 0 && daysDiff < 30) {
+            const daysDiff = Math.floor(
+              (expenseDate.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
+            );
+            if (daysDiff >= 0 && daysDiff < numOfDays) {
               dailyData[daysDiff].amount += expense.amount;
             }
           }
@@ -83,8 +93,11 @@ export function ExpensesChart({
 
       expenses.forEach((expense) => {
         // Filter expenses based on typeFilter - by default show only expenses
-        const shouldInclude = typeFilter === 'income' ? expense.type === 'income' : expense.type === 'expense';
-        
+        const shouldInclude =
+          typeFilter === 'income'
+            ? expense.type === 'income'
+            : expense.type === 'expense';
+
         if (shouldInclude) {
           const expenseDate = new Date(expense.date);
           if (isSameYear(expenseDate, currentDate)) {

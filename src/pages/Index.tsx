@@ -38,6 +38,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  getCustomMonthEnd,
+  getCustomMonthStart,
+  isInCustomMonth,
+} from '@/lib/utils';
 
 const Index = () => {
   const [view, setView] = useState<'month' | 'year'>('month');
@@ -54,25 +59,6 @@ const Index = () => {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [sortType, setSortType] = useState<'date' | 'amount'>('date');
   const [showActions, setShowActions] = useState(false);
-
-  // Helper functions for custom month periods (26th to 25th)
-  const getCustomMonthStart = (date: Date) => {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    return setDate(new Date(year, month - 1, 26), 26);
-  };
-
-  const getCustomMonthEnd = (date: Date) => {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    return setDate(new Date(year, month, 25), 25);
-  };
-
-  const isInCustomMonth = (expenseDate: Date, currentDate: Date) => {
-    const start = getCustomMonthStart(currentDate);
-    const end = getCustomMonthEnd(currentDate);
-    return expenseDate >= start && expenseDate <= end;
-  };
 
   const handleNavigate = (direction: 'prev' | 'next') => {
     setCurrentDate((current) => {
