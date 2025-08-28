@@ -41,12 +41,13 @@ import {
 import {
   getCustomMonthEnd,
   getCustomMonthStart,
+  getDateOrNextMonth,
   isInCustomMonth,
 } from '@/lib/utils';
 
 const Index = () => {
   const [view, setView] = useState<'month' | 'year'>('month');
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState(getDateOrNextMonth());
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expenses, setExpenses] = useLocalStorage<Expense[]>('expenses', []);
   const [filterKeyword, setFilterKeyword] = useState('');
