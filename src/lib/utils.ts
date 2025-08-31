@@ -29,6 +29,6 @@ export const getDateOrNextMonth = () => {
   const year = new Date().getFullYear();
   const day = new Date().getDate();
 
-  if (day >= 26) return new Date(year, month + 1, day);
+  if (day >= 26) return new Date(year, month + 1, 1);
   return new Date();
 };
